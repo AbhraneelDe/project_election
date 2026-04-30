@@ -1,0 +1,213 @@
+{% extends 'assistant/base.html' %}
+{% block title %}Understand Your Vote{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════════════════
+     HERO SECTION
+══════════════════════════════════════════════════════════ -->
+<section class="hero" aria-labelledby="hero-heading">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-grid-pattern"></div>
+  </div>
+  <div class="hero-container">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      Non-Partisan · Accurate · Educational
+    </div>
+    <h1 class="hero-title" id="hero-heading">
+      Understand Your<br/>
+      <span class="hero-highlight">Right to Vote</span>
+    </h1>
+    <p class="hero-subtitle">
+      From voter registration to inauguration — explore every step of the democratic election process
+      through our interactive guide and AI-powered assistant.
+    </p>
+    <div class="hero-actions">
+      <a href="{% url 'chat' %}" class="btn btn-primary" id="hero-chat-btn">
+        <span class="btn-icon">💬</span>
+        Ask ElectionGuide
+      </a>
+      <a href="#timeline" class="btn btn-secondary" id="hero-timeline-btn">
+        <span class="btn-icon">📅</span>
+        View Timeline
+      </a>
+    </div>
+    <div class="hero-stats" aria-label="Quick facts">
+      <div class="stat-item">
+        <span class="stat-num">8</span>
+        <span class="stat-label">Election Phases</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-num">538</span>
+        <span class="stat-label">Electoral Votes</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-num">270</span>
+        <span class="stat-label">Votes to Win</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll-hint" aria-hidden="true">
+    <span>Scroll to explore</span>
+    <div class="scroll-arrow">↓</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     TIMELINE SECTION
+══════════════════════════════════════════════════════════ -->
+<section class="timeline-section" id="timeline" aria-labelledby="timeline-heading">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-label">The Journey</span>
+      <h2 class="section-title" id="timeline-heading">Election Process Timeline</h2>
+      <p class="section-subtitle">
+        Follow the complete path of a US presidential election — from registration to inauguration.
+      </p>
+    </div>
+
+    <div class="timeline" role="list">
+      {% for step in timeline_steps %}
+      <div class="timeline-item {% if forloop.counter|divisibleby:2 %}timeline-item--right{% else %}timeline-item--left{% endif %}"
+           role="listitem"
+           style="--item-index: {{ forloop.counter0 }}">
+        <div class="timeline-connector" aria-hidden="true">
+          <div class="timeline-node">
+            <span class="timeline-icon" aria-hidden="true">{{ step.icon }}</span>
+          </div>
+        </div>
+        <div class="timeline-card">
+          <div class="card-phase-badge">{{ step.phase }}</div>
+          <h3 class="card-title">{{ step.title }}</h3>
+          <p class="card-period">
+            <span class="period-icon" aria-hidden="true">🕐</span>
+            {{ step.period }}
+          </p>
+          <p class="card-description">{{ step.description }}</p>
+          <ul class="card-actions" aria-label="Key actions for {{ step.title }}">
+            {% for action in step.key_actions %}
+            <li class="card-action-item">
+              <span class="check-icon" aria-hidden="true">✓</span>
+              {{ action }}
+            </li>
+            {% endfor %}
+          </ul>
+          <button class="card-ask-btn"
+                  onclick="askAbout('{{ step.title }}')"
+                  aria-label="Ask ElectionGuide about {{ step.title }}">
+            Ask ElectionGuide about this →
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     LEARN SECTION — Quick-Fact Cards
+══════════════════════════════════════════════════════════ -->
+<section class="learn-section" id="learn" aria-labelledby="learn-heading">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-label">Key Concepts</span>
+      <h2 class="section-title" id="learn-heading">Essential Election Knowledge</h2>
+      <p class="section-subtitle">Core concepts every voter should understand.</p>
+    </div>
+
+    <div class="learn-grid" role="list">
+
+      <article class="learn-card" role="listitem" tabindex="0">
+        <div class="learn-card-icon" aria-hidden="true">🗳️</div>
+        <h3 class="learn-card-title">Types of Elections</h3>
+        <p class="learn-card-body">
+          The US holds three main types: <strong>Primary</strong> (party candidate selection),
+          <strong>General</strong> (final election between parties), and
+          <strong>Special</strong> elections (fill vacant seats mid-term).
+        </p>
+      </article>
+
+      <article class="learn-card" role="listitem" tabindex="0">
+        <div class="learn-card-icon" aria-hidden="true">🗺️</div>
+        <h3 class="learn-card-title">Electoral College Basics</h3>
+        <p class="learn-card-body">
+          Each state has electors equal to its total Congressional seats. A candidate needs
+          <strong>270 of 538 electoral votes</strong> to win the presidency. Most states use winner-take-all rules.
+        </p>
+      </article>
+
+      <article class="learn-card" role="listitem" tabindex="0">
+        <div class="learn-card-icon" aria-hidden="true">📋</div>
+        <h3 class="learn-card-title">Voter Registration</h3>
+        <p class="learn-card-body">
+          Registration is the first step to participating. Requirements vary by state,
+          but you generally must be a <strong>US citizen, 18+, and a state resident</strong>.
+          Register at <strong>vote.gov</strong>.
+        </p>
+      </article>
+
+      <article class="learn-card" role="listitem" tabindex="0">
+        <div class="learn-card-icon" aria-hidden="true">⚖️</div>
+        <h3 class="learn-card-title">Your Voting Rights</h3>
+        <p class="learn-card-body">
+          The Constitution and federal law protect your right to vote free from discrimination.
+          You have the right to <strong>accessible polling places</strong>,
+          <strong>assistance if needed</strong>, and a <strong>provisional ballot</strong> if eligibility is questioned.
+        </p>
+      </article>
+
+      <article class="learn-card" role="listitem" tabindex="0">
+        <div class="learn-card-icon" aria-hidden="true">📬</div>
+        <h3 class="learn-card-title">Absentee & Mail-In Voting</h3>
+        <p class="learn-card-body">
+          Many states offer <strong>no-excuse absentee voting</strong> — you don't need a reason to vote by mail.
+          Request your ballot early, complete it carefully, and return it before the deadline.
+        </p>
+      </article>
+
+      <article class="learn-card" role="listitem" tabindex="0">
+        <div class="learn-card-icon" aria-hidden="true">📊</div>
+        <h3 class="learn-card-title">How Ballots Are Counted</h3>
+        <p class="learn-card-body">
+          Election officials use a combination of hand-counting, optical scanners, and ballot tabulation machines.
+          Multiple layers of <strong>audits and bipartisan oversight</strong> ensure accuracy and integrity.
+        </p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CTA SECTION
+══════════════════════════════════════════════════════════ -->
+<section class="cta-section" aria-labelledby="cta-heading">
+  <div class="cta-container">
+    <div class="cta-icon" aria-hidden="true">💬</div>
+    <h2 class="cta-title" id="cta-heading">Still Have Questions?</h2>
+    <p class="cta-subtitle">
+      Our AI-powered ElectionGuide assistant can answer your specific questions about voting,
+      registration, candidates, and more — instantly.
+    </p>
+    <a href="{% url 'chat' %}" class="btn btn-primary btn-large" id="cta-chat-btn">
+      Chat with ElectionGuide
+    </a>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function askAbout(topic) {
+  // Store topic in sessionStorage, then open chat
+  sessionStorage.setItem('preloadQuestion', 'Tell me about ' + topic + ' in the election process.');
+  window.location.href = "{% url 'chat' %}";
+}
+</script>
+{% endblock %}

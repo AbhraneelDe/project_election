@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}ElectionGuide{% endblock %} — Your Civic Education Assistant</title>
+  <meta name="description" content="ElectionGuide helps citizens understand the election process, timelines, voter registration, and democratic participation in a clear, non-partisan way." />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="{% static 'assistant/css/style.css' %}" />
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- ── Navigation ── -->
+  <header class="navbar" role="banner">
+    <div class="nav-container">
+      <a href="{% url 'home' %}" class="brand" aria-label="ElectionGuide Home">
+        <span class="brand-icon">🏛️</span>
+        <span class="brand-text">Election<strong>Guide</strong></span>
+      </a>
+      <nav class="nav-links" role="navigation" aria-label="Main navigation">
+        <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+        <a href="{% url 'home' %}#timeline" class="nav-link">Timeline</a>
+        <a href="{% url 'home' %}#learn" class="nav-link">Learn</a>
+        <a href="{% url 'chat' %}" class="btn-nav-cta {% if request.resolver_match.url_name == 'chat' %}active{% endif %}">
+          Ask ElectionGuide
+        </a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Page Content ── -->
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer class="footer" role="contentinfo">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <span class="brand-icon">🏛️</span>
+        <span>Election<strong>Guide</strong></span>
+      </div>
+      <p class="footer-tagline">Empowering citizens through civic education.</p>
+      <p class="footer-disclaimer">
+        ElectionGuide is a non-partisan educational tool. For official election information,
+        visit <a href="https://vote.gov" target="_blank" rel="noopener">vote.gov</a> or your state's official election website.
+      </p>
+      <p class="footer-copy">&copy; 2024 ElectionGuide. Built for civic education.</p>
+    </div>
+  </footer>
+
+  <!-- ── Scripts ── -->
+  <script src="{% static 'assistant/js/app.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

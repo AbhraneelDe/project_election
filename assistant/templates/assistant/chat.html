@@ -1,0 +1,164 @@
+{% extends 'assistant/base.html' %}
+{% load static %}
+{% block title %}Chat with ElectionGuide{% endblock %}
+
+{% block extra_head %}
+<style>
+  body { background: #f5f7fa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────── -->
+  <aside class="chat-sidebar" aria-label="ElectionGuide information panel">
+    <div class="sidebar-brand">
+      <div class="sidebar-avatar" aria-hidden="true">🏛️</div>
+      <div>
+        <h2 class="sidebar-name">ElectionGuide</h2>
+        <span class="sidebar-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          Online · Non-Partisan
+        </span>
+      </div>
+    </div>
+
+    <p class="sidebar-desc">
+      Your trusted, non-partisan AI assistant for understanding the US election process.
+      Ask anything about voting, registration, ballots, and more.
+    </p>
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">Suggested Questions</h3>
+      <ul class="suggestion-list" role="list" aria-label="Suggested questions">
+        {% for question in suggested_questions %}
+        <li>
+          <button class="suggestion-chip"
+                  onclick="sendSuggestion(this)"
+                  data-question="{{ question }}"
+                  aria-label="Ask: {{ question }}">
+            {{ question }}
+          </button>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">Topics I Cover</h3>
+      <ul class="topic-tags" aria-label="Topics covered by ElectionGuide">
+        <li class="topic-tag">📋 Voter Registration</li>
+        <li class="topic-tag">🗳️ Primary Elections</li>
+        <li class="topic-tag">🗺️ Electoral College</li>
+        <li class="topic-tag">📬 Mail-In Voting</li>
+        <li class="topic-tag">📊 Vote Counting</li>
+        <li class="topic-tag">⚖️ Voting Rights</li>
+        <li class="topic-tag">🎉 Inauguration</li>
+        <li class="topic-tag">🔍 Ballot Types</li>
+      </ul>
+    </div>
+
+    <div class="sidebar-disclaimer" role="note">
+      <span class="disclaimer-icon" aria-hidden="true">ℹ️</span>
+      <span>All information is non-partisan and educational. For official guidance, visit
+        <a href="https://vote.gov" target="_blank" rel="noopener">vote.gov</a>.
+      </span>
+    </div>
+  </aside>
+
+  <!-- ── Main Chat Window ──────────────────────────────────── -->
+  <main class="chat-main" aria-labelledby="chat-heading">
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-avatar" aria-hidden="true">🏛️</div>
+        <div>
+          <h1 class="chat-header-title" id="chat-heading">ElectionGuide</h1>
+          <span class="chat-header-sub">Civic Education Assistant · Always Neutral</span>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <button class="btn-icon-action" id="clearChatBtn" aria-label="Clear conversation" title="Clear chat">
+          🗑️
+        </button>
+        <a href="{% url 'home' %}" class="btn-icon-action" aria-label="Back to home" title="Back to home">
+          🏠
+        </a>
+      </div>
+    </div>
+
+    <!-- Message Area -->
+    <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Conversation">
+
+      <!-- Welcome message (shown initially) -->
+      <div class="message message--assistant" id="welcomeMessage" role="article" aria-label="ElectionGuide greeting">
+        <div class="message-avatar" aria-hidden="true">🏛️</div>
+        <div class="message-bubble">
+          <p class="message-text">
+            👋 Hi there! Welcome to <strong>ElectionGuide AI</strong> — your friendly, step-by-step guide to understanding elections. I'm fully neutral and always here to inform, never to influence.
+          </p>
+          <p class="message-text">
+            I'll walk you through any part of the election process clearly, with progress steps, timelines, and official sources to verify everything.
+          </p>
+          <p class="message-text">
+            <strong>To get started — what election are you curious about?</strong>
+          </p>
+          <div class="welcome-chips" role="list" aria-label="Quick start questions">
+            <button class="welcome-chip" onclick="sendSuggestion(this)" data-question="Federal election — tell me about the Presidential election process step by step." role="listitem">🏛️ Federal / Presidential</button>
+            <button class="welcome-chip" onclick="sendSuggestion(this)" data-question="State election — how do state elections work and what should I know?" role="listitem">🗺️ State Election</button>
+            <button class="welcome-chip" onclick="sendSuggestion(this)" data-question="Local election — how do local elections work and how can I participate?" role="listitem">🏙️ Local Election</button>
+            <button class="welcome-chip" onclick="sendSuggestion(this)" data-question="How do I register to vote? Walk me through it step by step." role="listitem">📋 How to Register</button>
+          </div>
+          <time class="message-time" datetime="{{ request.timestamp }}">Just now</time>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Typing Indicator -->
+    <div class="typing-indicator" id="typingIndicator" aria-live="polite" aria-atomic="true" hidden>
+      <div class="message-avatar" aria-hidden="true">🏛️</div>
+      <div class="typing-bubble" aria-label="ElectionGuide is typing">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-area">
+      <form class="chat-form" id="chatForm" role="search" aria-label="Ask ElectionGuide a question">
+        {% csrf_token %}
+        <label for="userInput" class="sr-only">Your question</label>
+        <textarea
+          id="userInput"
+          class="chat-input"
+          name="message"
+          placeholder="Ask about voter registration, Electoral College, ballot types..."
+          rows="1"
+          maxlength="500"
+          aria-label="Type your election question"
+          autocomplete="off"
+        ></textarea>
+        <button type="submit" class="chat-send-btn" id="sendBtn" aria-label="Send message">
+          <span class="send-icon" aria-hidden="true">➤</span>
+        </button>
+      </form>
+      <p class="input-hint">
+        ElectionGuide provides educational information only. For official voting information, visit
+        <a href="https://vote.gov" target="_blank" rel="noopener">vote.gov</a>.
+      </p>
+    </div>
+  </main>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Pass Django CSRF token and API URL to the chat script
+  window.CHAT_API_URL = "{% url 'chat_api' %}";
+  window.CSRF_TOKEN   = "{{ csrf_token }}";
+</script>
+<script src="{% static 'assistant/js/chat.js' %}"></script>
+{% endblock %}
