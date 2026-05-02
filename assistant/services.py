@@ -59,8 +59,10 @@ class GeminiService:
             )
 
             if response.text:
+                logger.info(f"Gemini success: {len(response.text)} chars returned.")
                 return response.text
             
+            logger.warning("Gemini returned empty text response.")
             return "I'm sorry, I couldn't generate a response."
 
         except Exception as e:
@@ -90,23 +92,33 @@ class FallbackService:
         """
         Analyze the message and return a relevant educational snippet.
         """
+        import re
         msg = message.lower()
+        
+        def has_any(keywords):
+            for kw in keywords:
+                if kw == "id":
+                    if re.search(r'\bid\b', msg): return True
+                elif kw in msg:
+                    return True
+            return False
 
-        if any(w in msg for w in ["register", "registration", "sign up", "eligible"]):
+        if has_any(["register", "registration", "sign up", "eligible"]):
             return FALLBACK_RESPONSES["registration"]
-        if any(w in msg for w in ["electoral college", "electors", "electoral vote"]):
+        if has_any(["electoral college", "electors", "electoral vote"]):
             return FALLBACK_RESPONSES["electoral_college"]
-        if any(w in msg for w in ["primary", "caucus", "nomination"]):
+        if has_any(["primary", "caucus", "nomination", "primaries"]):
             return FALLBACK_RESPONSES["primaries"]
-        if any(w in msg for w in ["count", "counting", "certif", "result"]):
+        if has_any(["count", "counting", "certif", "result"]):
             return FALLBACK_RESPONSES["counting"]
-        if any(w in msg for w in ["mail", "absentee", "mail-in", "postal"]):
+        if has_any(["mail", "absentee", "mail-in", "postal"]):
             return FALLBACK_RESPONSES["mail_in"]
-        if any(w in msg for w in ["id", "identification", "documents", "bring"]):
+        # Special handling for voter ID keywords
+        if has_any(["voter id", "identification", "documents"]) or re.search(r'\bid\b', msg):
             return FALLBACK_RESPONSES["voter_id"]
-        if any(w in msg for w in ["inaugurati", "january 20", "swear", "oath"]):
+        if has_any(["inaugurati", "january 20", "swear", "oath"]):
             return FALLBACK_RESPONSES["inauguration"]
-        if any(w in msg for w in ["hello", "hi", "hey", "help", "start"]):
+        if has_any(["hello", "hi", "hey", "help", "start"]):
             return FALLBACK_RESPONSES["welcome"]
 
         return FALLBACK_RESPONSES["default"]

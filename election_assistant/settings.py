@@ -90,3 +90,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Gemini API Key
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+
+# Google Cloud Logging
+if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+    try:
+        import google.cloud.logging
+        client = google.cloud.logging.Client()
+        client.setup_logging()
+    except Exception:
+        pass

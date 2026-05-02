@@ -69,3 +69,26 @@ def test_gemini_service_sdk_error_fallback(mocker, settings):
     
     reply = GeminiService.get_reply("How to register?", [])
     assert reply == FALLBACK_RESPONSES["registration"]
+
+def test_fallback_service_all_branches():
+    """Verify all branches of the fallback service."""
+    assert FallbackService.get_response("primary election") == FALLBACK_RESPONSES["primaries"]
+    assert FallbackService.get_response("count votes") == FALLBACK_RESPONSES["counting"]
+    assert FallbackService.get_response("mail-in ballot") == FALLBACK_RESPONSES["mail_in"]
+    assert FallbackService.get_response("voter id documents") == FALLBACK_RESPONSES["voter_id"]
+    assert FallbackService.get_response("presidential inauguration") == FALLBACK_RESPONSES["inauguration"]
+
+def test_gemini_service_empty_response(mocker, settings):
+    """Test behavior when Gemini returns an empty text response."""
+    settings.GEMINI_API_KEY = "valid_key"
+    mocker.patch('google.generativeai.configure')
+    mock_model = mocker.patch('google.generativeai.GenerativeModel').return_value
+    mock_chat = mock_model.start_chat.return_value
+    
+    # Mock response with empty text
+    mock_response = MagicMock()
+    mock_response.text = ""
+    mock_chat.send_message.return_value = mock_response
+    
+    reply = GeminiService.get_reply("hello", [])
+    assert reply == "I'm sorry, I couldn't generate a response."
