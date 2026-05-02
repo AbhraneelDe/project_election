@@ -7,7 +7,6 @@
   const chatForm      = document.getElementById('chatForm');
   const userInput     = document.getElementById('userInput');
   const sendBtn       = document.getElementById('sendBtn');
-  const typingIndicator = document.getElementById('typingIndicator');
   const clearBtn      = document.getElementById('clearChatBtn');
 
   const API_URL    = window.CHAT_API_URL || '/api/chat/';
@@ -82,8 +81,6 @@
     userInput.style.height = 'auto';
     scrollToBottom();
 
-    showTyping(true);
-
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -104,11 +101,9 @@
       // Keep last 20 entries to avoid bloat
       if (history.length > 20) history = history.slice(-20);
 
-      showTyping(false);
       appendMessage('assistant', reply);
 
     } catch (err) {
-      showTyping(false);
       appendMessage('assistant', `⚠️ **Connection error**: ${err.message}. Please check that the server is running and try again.`);
     }
 
@@ -143,10 +138,6 @@
     });
   }
 
-  function showTyping(show) {
-    typingIndicator.hidden = !show;
-    if (show) scrollToBottom();
-  }
 
   function setLoading(loading) {
     sendBtn.disabled = loading;
