@@ -4,9 +4,8 @@ assistant/services.py
 Services for Gemini API interaction and fallback responses.
 """
 
-import json
-import requests
 import logging
+import google.generativeai as genai
 from typing import List, Dict, Any
 from django.conf import settings
 from .prompts import ELECTION_SYSTEM_PROMPT
@@ -15,88 +14,72 @@ from .constants import FALLBACK_RESPONSES
 logger = logging.getLogger(__name__)
 
 class GeminiService:
-    """Service to interact with the Google Gemini 1.5 Flash API."""
+    """Service to interact with the Google Gemini 1.5 Flash API using the official SDK."""
 
     @staticmethod
     def get_reply(user_message: str, history: List[Dict[str, str]]) -> str:
         """
-        Call Gemini API and return the response text.
+        Call Gemini API using the SDK and return the response text.
         """
         api_key = getattr(settings, 'GEMINI_API_KEY', None)
         if not api_key or api_key == "your_gemini_api_key_here":
             return FallbackService.get_response(user_message)
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-
         try:
-            contents = GeminiService._build_contents(user_message, history)
-            payload = {
-                "contents": contents,
-                "generationConfig": {
-                    "temperature": 0.3,
-                    "topK": 40,
-                    "topP": 0.95,
-                    "maxOutputTokens": 1024,
-                },
-                "safetySettings": [
-                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-                ]
-            }
+            genai.configure(api_key=api_key)
+            
+            # Initialize model with system instructions and grounding tools
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-flash",
+                system_instruction=ELECTION_SYSTEM_PROMPT,
+                tools=[{'google_search_retrieval': {}}] # Enable Google Search Grounding
+            )
 
-            response = requests.post(url, json=payload, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+            # Convert history to SDK format
+            chat_history = GeminiService._convert_history(history)
+            
+            # Start chat session
+            chat = model.start_chat(history=chat_history)
+            
+            # Generate response
+            generation_config = genai.types.GenerationConfig(
+                temperature=0.3,
+                top_p=0.95,
+                top_k=40,
+                max_output_tokens=1024,
+            )
+            
+            response = chat.send_message(
+                user_message,
+                generation_config=generation_config,
+                safety_settings={
+                    genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT: genai.types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                    genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH: genai.types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                }
+            )
 
-            return GeminiService._extract_response_text(data)
+            if response.text:
+                return response.text
+            
+            return "I'm sorry, I couldn't generate a response."
 
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Gemini API request failed: {e}")
-            return "I'm having trouble connecting to my brain right now. Please try again in a moment."
         except Exception as e:
-            logger.error(f"Unexpected error in GeminiService: {e}")
-            return "An unexpected error occurred. Please try again."
+            logger.error(f"Gemini SDK Error: {e}")
+            # Fallback to local response if API fails
+            return FallbackService.get_response(user_message)
 
     @staticmethod
-    def _build_contents(user_message: str, history: List[Dict[str, str]]) -> List[Dict[str, Any]]:
-        """Construct the contents array for Gemini API."""
-        contents = []
-
-        # System Prompt (as first user turn fallback for v1beta)
-        contents.append({
-            "role": "user",
-            "parts": [{"text": ELECTION_SYSTEM_PROMPT + "\n\nPlease acknowledge you understand your role."}]
-        })
-        contents.append({
-            "role": "model",
-            "parts": [{"text": "Understood! I'm ElectionGuide AI — your friendly, step-by-step guide to understanding elections."}]
-        })
-
-        # History (last 10 turns)
+    def _convert_history(history: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+        """Convert standard history format to Google SDK format."""
+        converted = []
+        # Last 10 turns for context
         for entry in history[-10:]:
             role = "user" if entry.get("role") == "user" else "model"
-            contents.append({
+            converted.append({
                 "role": role,
-                "parts": [{"text": entry.get("content", "")}]
+                "parts": [entry.get("content", "")]
             })
-
-        # New user message
-        contents.append({
-            "role": "user",
-            "parts": [{"text": user_message}]
-        })
-
-        return contents
-
-    @staticmethod
-    def _extract_response_text(data: Dict[str, Any]) -> str:
-        """Extract text from the Gemini API response JSON."""
-        candidates = data.get("candidates", [])
-        if candidates:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if parts:
-                return parts[0].get("text", "")
-        return "I'm sorry, I couldn't generate a response."
+        return converted
 
 
 class FallbackService:

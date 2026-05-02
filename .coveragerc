@@ -1,0 +1,14 @@
+[run]
+source = assistant
+omit =
+    */migrations/*
+    */tests/*
+    */apps.py
+    */admin.py
+    */urls.py
+    manage.py
+    election_assistant/*
+
+[report]
+show_missing = True
+skip_covered = True
